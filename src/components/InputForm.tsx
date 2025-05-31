@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { MapPin, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { MapPin, Search, Crosshair } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface InputFormProps {
   location: string;
@@ -21,71 +21,119 @@ const InputForm: React.FC<InputFormProps> = ({
   onSubmit,
   isLoading,
 }) => {
+  const [useLiveLocation, setUseLiveLocation] = useState(false);
+
+  const fetchLiveLocation = () => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await res.json();
+          const place = data.address?.city || data.address?.town || data.display_name;
+          if (place) {
+            setLocation(place);
+            setUseLiveLocation(true);
+          }
+        } catch {
+          alert("Unable to fetch location details.");
+        }
+      },
+      () => alert("Permission denied for live location."),
+      { timeout: 10000 }
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
   };
 
   return (
-    <motion.form 
-      onSubmit={handleSubmit} 
-      className="space-y-6 mt-6 p-6 bg-orange-50 rounded-lg shadow-md"
+    <motion.form
+      onSubmit={handleSubmit}
+      className="space-y-8 w-full max-w-2xl mt-6 px-2"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div>
-        <label htmlFor="location" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-          <MapPin className="w-5 h-5 mr-2 text-orange-500" />
-          Where are you?
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-orange-500" />
+          Location
         </label>
-        <input
-          id="location"
-          type="text"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="e.g., Delhi, New York, London..."
-          className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-all duration-200"
-          required
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => {
+              setLocation(e.target.value);
+              setUseLiveLocation(false);
+            }}
+            placeholder="e.g., Delhi, New York..."
+            className="flex-1 px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            disabled={useLiveLocation}
+          />
+          <button
+            type="button"
+            onClick={fetchLiveLocation}
+            title="Use current location"
+            className="px-3 py-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition"
+          >
+            <Crosshair size={16} />
+          </button>
+        </div>
+        {useLiveLocation && (
+          <p className="text-xs text-green-600">Using your live location</p>
+        )}
       </div>
-      
-      <div>
-        <label htmlFor="preferences" className="text-sm font-medium text-gray-700 mb-1">
-          What are you craving? (comma-separated)
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          What are you craving?
         </label>
         <textarea
-          id="preferences"
           value={preferences}
           onChange={(e) => setPreferences(e.target.value)}
           rows={2}
-          placeholder="e.g., spicy, vegetarian, cheap, quick, healthy..."
-          className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-all duration-200"
+          placeholder="e.g., spicy, vegetarian, quick..."
+          className="w-full px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           required
         />
-        <p className="mt-1 text-xs text-gray-500">Tell us your preferences, dietary restrictions, or mood!</p>
       </div>
-      
+
       <motion.button
         type="submit"
         disabled={isLoading}
-        className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-lg text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:bg-gray-300 transition-all duration-200"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white font-semibold text-sm rounded-lg hover:bg-orange-600 transition-all"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
         {isLoading ? (
-          <div className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Finding options...</span>
-          </div>
+          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="white"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="white"
+              d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"
+            />
+          </svg>
         ) : (
-          <div className="flex items-center justify-center">
-            <Search className="w-5 h-5 mr-2" />
-            <span>Find My Lunch!</span>
-          </div>
+          <>
+            <Search size={16} />
+            <span>Find My Lunch</span>
+          </>
         )}
       </motion.button>
     </motion.form>

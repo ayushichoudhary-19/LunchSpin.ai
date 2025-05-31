@@ -3,16 +3,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface Suggestion {
-  id: string;
-  name?: string;
-  recipeName?: string;
-  commentary: string;
-  mapsQuery?: string;
-  ingredientsNeeded?: string[];
-  basicSteps?: string;
-}
+import { Suggestion } from "@/app/app/page";
 
 interface SpinnerWheelProps {
   suggestions: Suggestion[];
@@ -20,12 +11,22 @@ interface SpinnerWheelProps {
   onClose: () => void;
 }
 
-const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ suggestions, onSpinFinish, onClose }) => {
+function getSuggestionTitle(suggestion: Suggestion): string {
+  if ("name" in suggestion) return suggestion.name;
+  if ("recipeName" in suggestion) return suggestion.recipeName;
+  return "Unknown";
+}
+
+const SpinnerWheel: React.FC<SpinnerWheelProps> = ({
+  suggestions,
+  onSpinFinish,
+  onClose,
+}) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const itemHeight = 60;
-  const containerHeight = 192; // Tailwind's h-48 = 192px
+  const containerHeight = 192;
   const centeredOffset = containerHeight / 2 - itemHeight / 2;
 
   useEffect(() => {
@@ -81,45 +82,47 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ suggestions, onSpinFinish, 
             <X size={22} />
           </button>
 
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Spin the Wheel!</h2>
-          <p className="text-sm text-slate-500 mb-6">Let fate decide your next delicious meal.</p>
-
-          {/* Spinner Box */}
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Spin the Wheel!
+          </h2>
+          <p className="text-sm text-slate-500 mb-6">
+            Let fate decide your next delicious meal.
+          </p>
           <div className="relative h-48 w-full max-w-sm mx-auto overflow-hidden bg-orange-50 rounded-2xl shadow-inner border border-orange-200">
             <div
               className="transition-transform duration-100 ease-linear"
               style={{
-                transform: `translateY(${-selectedIndex * itemHeight + centeredOffset}px)`,
+                transform: `translateY(${
+                  -selectedIndex * itemHeight + centeredOffset
+                }px)`,
               }}
             >
               {[...suggestions, ...suggestions].map((suggestion, index) => (
                 <div
                   key={`${suggestion.id}-${index}`}
                   className={`flex items-center justify-center h-[60px] text-base md:text-lg font-medium px-4 transition-all duration-300 ${
-                    !isSpinning && showResult && index % suggestions.length === selectedIndex
+                    !isSpinning &&
+                    showResult &&
+                    index % suggestions.length === selectedIndex
                       ? "text-orange-600 scale-105 font-semibold"
                       : "text-slate-700"
                   }`}
                 >
-                  {suggestion.name || suggestion.recipeName}
+                  {getSuggestionTitle(suggestion)}
                 </div>
               ))}
             </div>
-
-           {/* Highlight Glow */}
-<div className="absolute top-1/2 left-0 right-0 h-[60px] -translate-y-1/2 pointer-events-none flex items-center justify-center z-10">
-  <div
-    className="w-[90%] h-full rounded-lg bg-white/10"
-    style={{
-      boxShadow: "0 0 10px 2px rgba(255, 115, 0, 0.3), 0 0 20px 5px rgba(255, 115, 0, 0.2)",
-      transition: "box-shadow 0.3s ease-in-out"
-    }}
-  />
-</div>
-
+            <div className="absolute top-1/2 left-0 right-0 h-[60px] -translate-y-1/2 pointer-events-none flex items-center justify-center z-10">
+              <div
+                className="w-[90%] h-full rounded-lg bg-white/10"
+                style={{
+                  boxShadow:
+                    "0 0 10px 2px rgba(255, 115, 0, 0.3), 0 0 20px 5px rgba(255, 115, 0, 0.2)",
+                  transition: "box-shadow 0.3s ease-in-out",
+                }}
+              />
+            </div>
           </div>
-
-          {/* Result Display */}
           <AnimatePresence>
             {!isSpinning && showResult && suggestions[selectedIndex] && (
               <motion.div
@@ -129,19 +132,22 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ suggestions, onSpinFinish, 
                 transition={{ delay: 0.2 }}
               >
                 <h3 className="text-lg md:text-xl font-semibold text-yellow-800">
-                {" It's"}{" "}
+                  {" It's"}{" "}
                   <span className="text-orange-600">
-                    {suggestions[selectedIndex].name || suggestions[selectedIndex].recipeName}!
+                  {getSuggestionTitle(suggestions[selectedIndex])}
+                    !
                   </span>
                 </h3>
-                <p className="text-sm text-yellow-700 mt-1">{suggestions[selectedIndex].commentary}</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  {suggestions[selectedIndex].commentary}
+                </p>
                 <motion.button
                   onClick={onClose}
                   className="mt-4 px-6 py-2 bg-gradient-to-br from-orange-500 to-orange-400 text-white rounded-xl font-medium hover:from-orange-600 hover:to-orange-500 transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                 {"Awesome! Let's Go!"}
+                  {"Awesome! Let's Go!"}
                 </motion.button>
               </motion.div>
             )}

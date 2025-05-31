@@ -1,8 +1,17 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Bricolage_Grotesque } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] });
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-grotesque',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+});
 
 export const metadata: Metadata = {
   title: 'LunchSpin.ai - What to eat or cook?',
@@ -16,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 text-gray-800`}>
+      <body className={`${inter.className} ${bricolage.variable} bg-gray-50 text-gray-800`}>
         {children}
       </body>
     </html>
